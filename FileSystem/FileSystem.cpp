@@ -8,9 +8,9 @@ void FileSystem::deleteNode(FSNode * node)
 
 	if (dir != nullptr)
 	{
-		for (size_t i = 0, size = dir->size(); i < size; i++)
+		while (dir->size() > 0)
 		{
-			deleteNode((*dir)[i]);
+			deleteNode((*dir)[0]);
 		}
 	}
 
@@ -23,30 +23,34 @@ FSNode* FileSystem::resolvePath(string path)
 {
 	istringstream sstream;
 	string field;
-	Folder* output = nullptr;
-	Folder* dir;
+	FSNode* output;
+	Folder* parent;
 
 	if (path.find('/') == 0)
 	{
-		dir = root;
+		output = root;
 		sstream.str(path.substr(1));
 	}
 	else
 	{
-		dir = currentDir;
+		output = currentDir;
 		sstream.str(path);
 	}
 
-	while (getline(sstream, field, '/') && dir != nullptr)
+	while (getline(sstream, field, '/') && output != nullptr)
 	{
 		if (field == ".");
 		else if (field == "..")
 		{
-			dir = dynamic_cast<Folder*>(dir->getParent());
+			output = output->getParent();
 		}
 		else
 		{
-			dir = dynamic_cast<Folder*>(dir->getChild(field));
+			parent = dynamic_cast<Folder*>(output);
+			if (parent != nullptr)
+			{
+				output = parent->getChild(field);
+			}
 		}
 	}
 
@@ -123,7 +127,7 @@ string FileSystem::ls(string path)
 
 	if (dir != nullptr)
 	{
-		output = "> is a folder an - is a file\n";
+		output = "### > folder ### - file ###\n";
 		for (size_t i = 0, size = dir->size(); i < size; i++)
 		{
 			child = (*dir)[i];
@@ -146,15 +150,20 @@ bool FileSystem::create(string path, string content)
 
 	if (parent != nullptr)
 	{
-		int index = disk.getFreeBlock();
-		if (index != -1)
+		if (parent->getChild(name) == nullptr)
 		{
-			File* file = new File(index, name, parent);
-			file->setContent(content);
-			parent->addChild(file);
+			int index = disk.getFreeBlock();
+			if (index != -1)
+			{
+				File* file = new File(index, name, parent);
+				file->setContent(content);
+				parent->addChild(file);
 
-			disk.writeBlock(file);
-			disk.writeBlock(parent);
+				disk.writeBlock(file);
+				disk.writeBlock(parent);
+
+				output = true;
+			}
 		}
 	}
 
@@ -163,8 +172,14 @@ bool FileSystem::create(string path, string content)
 
 string FileSystem::cat(string path)
 {
-	string output = "";
+	string output = "Could not find file.";
 	
+	File* file = dynamic_cast<File*>(resolvePath(path));
+
+	if (file != nullptr)
+	{
+		output = file->getContent();
+	}
 
 	return output;
 }
@@ -189,19 +204,24 @@ bool FileSystem::mkdir(string path)
 
 	string name;
 	splitPath(path, name);
-	
+
 	Folder* parent = dynamic_cast<Folder*>(resolvePath(path));
 
 	if (parent != nullptr)
 	{
-		int index = disk.getFreeBlock();
-		if (index != -1)
+		if (parent->getChild(name) == nullptr)
 		{
-			Folder* folder = new Folder(index, name, parent);
-			parent->addChild(folder);
+			int index = disk.getFreeBlock();
+			if (index != -1)
+			{
+				Folder* folder = new Folder(index, name, parent);
+				parent->addChild(folder);
 
-			disk.writeBlock(folder);
-			disk.writeBlock(parent);
+				disk.writeBlock(folder);
+				disk.writeBlock(parent);
+
+				output = true;
+			}
 		}
 	}
 
@@ -244,7 +264,7 @@ bool FileSystem::rm(string path)
 	bool output = false;
 
 	FSNode* trash = resolvePath(path);
-	if (trash != nullptr)
+	if (trash != nullptr && trash != root)
 	{
 		deleteNode(trash);
 		output = true;

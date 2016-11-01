@@ -42,6 +42,8 @@ bool Block::write(string data)
 		{
 			bytes[i] = '\0';
 		}
+
+		output = true;
 	}
 
 	return output;

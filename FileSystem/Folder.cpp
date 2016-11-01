@@ -21,6 +21,7 @@ void Folder::addChild(FSNode * child)
 FSNode* Folder::getChild(string name)
 {
 	FSNode* output = nullptr;
+	string childName;
 
 	for (size_t i = 0, size = children.size(); i < size && output == nullptr; i++)
 	{

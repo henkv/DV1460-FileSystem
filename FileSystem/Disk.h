@@ -1,6 +1,9 @@
 #pragma once
 #include "Block.h"
 #include "FSNode.h"
+#include "Folder.h"
+#include "File.h"
+
 class Disk
 {
 private:
@@ -14,7 +17,7 @@ public:
 
 	bool writeBlock(size_t index, string data);
 	bool writeBlock(FSNode* node);
-	FSNode* readBlock(size_t index);
+	FSNode * readBlock(size_t index, Folder * parent = nullptr);
 	void freeBlock(size_t index);
 
 	void saveImage(string filename);
