@@ -149,8 +149,6 @@
     <ClInclude Include="FileSystem.h" />
     <ClInclude Include="Folder.h" />
     <ClInclude Include="FSNode.h" />
-    <ClInclude Include="Heap.h" />
-    <ClInclude Include="Queue.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Block.cpp" />
